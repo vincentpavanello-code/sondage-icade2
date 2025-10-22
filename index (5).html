@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sondage IA - ICADE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div id="app"></div>
+
+    <script>
+        // État du formulaire
+        let formData = {
+            fonction: '',
+            seniorite: '',
+            outils: '',
+            frequence: '',
+            partTaches: '',
+            reflexeIA: 5,
+            tempsGagne: '',
+            gagneToujours: '',
+            qualite: '',
+            reinvestissement: [],
+            casUsages: [],
+            gainConcret: '',
+            tacheDeblocage: '',
+            freins: '',
+            besoins: ''
+        };
+
+        let isSubmitting = false;
+        let submitted = false;
+
+        // Fonction de soumission
+        function handleSubmit() {
+            console.log('Soumission du formulaire');
+            console.log('Données:', formData);
+            
+            isSubmitting = true;
+            render();
+
+            // Créer un formulaire pour l'envoi
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'https://script.google.com/macros/s/AKfycbxdVA9RWmV47Y1woxiqq5rEz3zrvXJkehLcb9XaydYVjpXpeBsZldjp8jiUWBpRo8fN/exec';
+            form.target = 'hidden_iframe';
+
+            // Ajouter les données
+            Object.keys(formData).forEach(key => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = Array.isArray(formData[key]) ? formData[key].join(', ') : formData[key];
+                form.appendChild(input);
+            });
+
+            // Créer iframe caché
+            let iframe = document.getElementById('hidden_iframe');
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.name = 'hidden_iframe';
+                iframe.id = 'hidden_iframe';
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+
+            setTimeout(() => {
+                try {
+                    document.body.removeChild(form);
+                } catch (e) {}
+                isSubmitting = false;
+                submitted = true;
+                render();
+            }, 2000);
+        }
+
+        // Gestion des checkboxes
+        function toggleCheckbox(field, value) {
+            const index = formData[field].indexOf(value);
+            if (index > -1) {
+                formData[field].splice(index, 1);
+            } else {
+                formData[field].push(value);
+            }
+            render();
+        }
+
+        // Gestion des radios
+        function setRadio(field, value) {
+            formData[field] = value;
+            render();
+        }
+
+        // Gestion du texte
+        function setText(field, value) {
+            formData[field] = value;
+        }
+
+        // Fonction de rendu
+        function render() {
+            const app = document.getElementById('app');
+
+            if (submitted) {
+                app.innerHTML = `
+                    <div class="min-h-screen p-8">
+                        <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-xl p-8">
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </div>
+                                <h2 class="text-3xl font-bold text-gray-800 mb-4">Merci pour votre participation !</h2>
+                                <p class="text-gray-600 mb-8">Vos réponses ont été enregistrées avec succès.</p>
+                                <button onclick="submitted = false; render();" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                                    Modifier mes réponses
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            app.innerHTML = `
+                <div class="min-h-screen p-4 md:p-8">
+                    <div class="max-w-4xl mx-auto">
+                        <div class="bg-white rounded-lg shadow-xl overflow-hidden">
+                            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-8 text-white">
+                                <h1 class="text-3xl md:text-4xl font-bold mb-2">Sondage sur l'utilisation de l'IA au travail - ICADE</h1>
+                                <p class="text-blue-100">Votre retour d'expérience nous aide à avoir un état d'expérience sur l'adoption de l'IA en entreprise, avec une approche par métier</p>
+                            </div>
+
+                            <div class="p-8 space-y-10">
+                                <!-- Section A: Profil -->
+                                <div class="border-l-4 border-blue-600 pl-6">
+                                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                                        <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">A</span>
+                                        Profil
+                                    </h2>
+
+                                    <div class="space-y-6">
+                                        <div>
+                                            <label class="block text-lg font-semibold text-gray-700 mb-3">1) Métier</label>
+                                            <div class="space-y-2">
+                                                ${renderRadioGroup('fonction', [
+                                                    'DIRECTION PROGRAMME',
+                                                    'DIRECTION TECHNIQUE',
+                                                    'DIRECTION MARKETING / COMMERCIAL IP',
+                                                    'DIRECTION DEVELOPPEMENT',
+                                                    'RELATION CLIENT & QUALITE',
+                                                    'DIRECTION AUDIT RISQUES CONFORMITE',
+                                                    'DIRECTION DE LA COMMUNICATION & REL. INSTIT.',
+                                                    'DIRECTION DES FINANCES COMPTABILITE',
+                                                    'DIRECTION SI & DIGITALE',
+                                                    'DIRECTION DES RELATIONS HUMAINES & ENVIRONNEMENT DE TRAVAIL',
+                                                    'DIRECTION ACHATS',
+                                                    'DIRECTION JURIDIQUE & ASSURANCES',
+                                                    'DIRECTION DE L\'INNOVATION',
+                                                    'DIRECTION DE LA RSE',
+                                                    'ASSISTANAT DE DIRECTION',
+                                                    'ASSET MANAGEMENT',
+                                                    'GESTION D\'OPERATIONS',
+                                                    'PROPERTY MANAGEMENT & SECURITE',
+                                                    'MARKETING / COMMERCIAL IFT',
+                                                    'PARTICIPATIONS STRAT & PORTFOLIO MANAGEMENT - GOK'
+                                                ])}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-lg font-semibold text-gray-700 mb-3">Séniorité</label>
+                                            <div class="space-y-2">
+                                                ${renderRadioGroup('seniorite', ['<2 ans', '2–5', '6–10', '11+'])}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Section B: Usages actuels -->
+                                <div class="border-l-4 border-indigo-600 pl-6">
+                                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                                        <span class="bg-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">B</span>
+                                        Usages actuels
+                                    </h2>
+
+                                    <div class="space-y-6">
+                                        <div>
+                                            <label class="block text-lg font-semibold text-gray-700 mb-3">2) Outils IA utilisés</label>
+                                            <div class="space-y-2">
+                                                ${renderRadioGroup('outils', [
+                                                    'Je n\'utilise que Delos',
+                                                    'J\'utilise Delos majoritairement, et parfois quelques autres outils (ChatGPT, Claude, etc.)',
+                                                    'J\'utilise parfois Delos, mais majoritairement d\'autres outils (ChatGPT, Claude, etc.)',
+                                                    'Je n\'utilise que d\'autres outils (ChatGPT, Claude, etc.)'
+                                                ])}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-lg font-semibold text-gray-700 mb-3">3) Fréquence d'usage</label>
+                                            <div class="space-y-2">
+                                                ${renderRadioGroup('frequence', ['Jamais', 'Une fois par mois', 'Une fois par semaine', 'Une fois par jour', 'Plusieurs fois par jour'])}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-lg font-semibold text-gray-700 mb-3">4) Part approximative des tâches traitées avec l'IA</label>
+                                            <div class="space-y-2">
+                                                ${renderRadioGroup('partTaches', ['0%', '<10%', '10–25%', '25–50%', '>50%'])}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-lg font-semibold text-gray-700 mb-3">
+                                                5) L'IA est-elle devenue un réflexe pour vous ? (1 = pas du tout → 10 = systématique)
+                                            </label>
+                                            <div class="flex items-center space-x-4">
+                                                <span class="text-sm text-gray-600">1</span>
+                                                <input type="range" min="1" max="10" value="${formData.reflexeIA}" 
+                                                    onchange="setText('reflexeIA', this.value); render();"
+                                                    class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                                <span class="text-sm text-gray-600">10</span>
+                                                <span class="text-lg font-bold text-indigo-600 w-8">${formData.reflexeIA}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Section C: Gains de temps & qualité -->
+                                <div class="border-l-4 border-purple-600 pl-6">
+                                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                                        <span class="bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">C</span>
+                                        Gains de temps & qualité
+                                    </h2>
+
+                                    <div class="space-y-6">
+                                        <div>
+                                            <label class="block text-lg font-semibold text-gray-700 mb-3">6) En moyenne, temps gagné/jour grâce à l'IA</label>
+                                            <div class="space-y-2">
+                                                ${renderRadioGroup('tempsGagne', ['0', '<15 min', '15–30', '30–45', '45–60', '60–90', '>90'])}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-lg font-semibold text-gray-700 mb-3">7) Quand vous utilisez l'IA, vous gagnez du temps...</label>
+                                            <div class="space-y-2">
+                                                ${renderRadioGroup('gagneToujours', ['Toujours', 'Souvent', 'Parfois', 'Rarement', 'Jamais'])}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-lg font-semibold text-gray-700 mb-3">8) Qualité perçue des livrables avec IA</label>
+                                            <div class="space-y-2">
+                                                ${renderRadioGroup('qualite', ['↓ Baisse', '= Identique', '↑ Légère amélioration', '↑ Nette amélioration'])}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-lg font-semibold text-gray-700 mb-3">9) Ce temps est majoritairement réinvesti en... (plusieurs choix possibles)</label>
+                                            <div class="space-y-2">
+                                                ${renderCheckboxGroup('reinvestissement', [
+                                                    'Travail de fond/contenu',
+                                                    'Relation client',
+                                                    'Production additionnelle',
+                                                    'Réduction d\'heures sup',
+                                                    'Autre'
+                                                ])}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Section D: Cas d'usages -->
+                                <div class="border-l-4 border-pink-600 pl-6">
+                                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                                        <span class="bg-pink-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">D</span>
+                                        Cas d'usages les plus répandus
+                                    </h2>
+
+                                    <div class="space-y-6">
+                                        <div>
+                                            <label class="block text-lg font-semibold text-gray-700 mb-3">10) Quels sont les cas d'usages fréquents dans votre quotidien professionnel ? (plusieurs choix possibles)</label>
+                                            <div class="space-y-2">
+                                                ${renderCheckboxGroup('casUsages', [
+                                                    'Résumés de réunions / notes / comptes-rendus',
+                                                    'Rédaction/édition (emails, rapports, offres, posts)',
+                                                    'Analyse de docs longs / appels d\'offres / CCTP',
+                                                    'Tableurs & data (formules, nettoyage, synthèse)',
+                                                    'Recherche marché/juridique/commerciale',
+                                                    'Génération d\'idées / plans / storyboard',
+                                                    'Aide au code / requêtes / scripts'
+                                                ])}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Section E: Questions ouvertes -->
+                                <div class="border-l-4 border-orange-600 pl-6">
+                                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                                        <span class="bg-orange-600 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">E</span>
+                                        Questions ouvertes
+                                    </h2>
+
+                                    <div class="space-y-6">
+                                        <div>
+                                            <label class="block text-lg font-semibold text-gray-700 mb-3">11) Racontez votre plus gros gain concret (tâche, durée, livrable, impact)</label>
+                                            <textarea rows="4" onchange="setText('gainConcret', this.value)" 
+                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                                                placeholder="Décrivez votre expérience...">${formData.gainConcret}</textarea>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-lg font-semibold text-gray-700 mb-3">12) Une tâche précise où l'IA vous a débloqué (ce que vous faisiez avant/après)</label>
+                                            <textarea rows="4" onchange="setText('tacheDeblocage', this.value)"
+                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                                                placeholder="Décrivez la situation...">${formData.tacheDeblocage}</textarea>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-lg font-semibold text-gray-700 mb-3">13) Qu'est-ce qui freine encore votre usage ? (outils, données, process, compétences)</label>
+                                            <textarea rows="4" onchange="setText('freins', this.value)"
+                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                                                placeholder="Listez vos principaux freins...">${formData.freins}</textarea>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-lg font-semibold text-gray-700 mb-3">14) De quoi auriez-vous besoin pour passer au niveau supérieur ? (templates, licences, cas d'usage, coaching)</label>
+                                            <textarea rows="4" onchange="setText('besoins', this.value)"
+                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                                                placeholder="Exprimez vos besoins...">${formData.besoins}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <div class="flex justify-center pt-6">
+                                    <button onclick="handleSubmit()" ${isSubmitting ? 'disabled' : ''}
+                                        class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-all shadow-lg hover:shadow-xl flex items-center space-x-2 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:from-blue-700 hover:to-indigo-700'}">
+                                        ${isSubmitting ? '<div class="spinner"></div><span>Envoi en cours...</span>' : '<span>Soumettre le sondage</span><span>→</span>'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-8 text-gray-600 text-sm">
+                            <p>Merci de prendre le temps de répondre à ce sondage 🙏</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderRadioGroup(field, options) {
+            return options.map(option => `
+                <label class="flex items-center space-x-2 cursor-pointer hover:bg-blue-50 p-2 rounded transition-colors">
+                    <div onclick="setRadio('${field}', '${option.replace(/'/g, "\\'")}'); render();" class="flex-shrink-0">
+                        <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center ${formData[field] === option ? 'border-blue-600' : 'border-gray-400'}">
+                            ${formData[field] === option ? '<div class="w-3 h-3 rounded-full bg-blue-600"></div>' : ''}
+                        </div>
+                    </div>
+                    <span class="text-gray-700">${option}</span>
+                </label>
+            `).join('');
+        }
+
+        function renderCheckboxGroup(field, options) {
+            return options.map(option => `
+                <label class="flex items-center space-x-2 cursor-pointer hover:bg-blue-50 p-2 rounded transition-colors">
+                    <div onclick="toggleCheckbox('${field}', '${option.replace(/'/g, "\\'")}'); render();">
+                        ${formData[field].includes(option) ? 
+                            '<svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"></path></svg>' :
+                            '<svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>'
+                        }
+                    </div>
+                    <span class="text-gray-700">${option}</span>
+                </label>
+            `).join('');
+        }
+
+        // Rendu initial
+        render();
+    </script>
+</body>
+</html>
